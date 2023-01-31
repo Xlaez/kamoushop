@@ -11,6 +11,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	cors "github.com/rs/cors/wrapper/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -69,6 +70,13 @@ func Run() *gin.Engine {
 
 	auth_col, users_col, token_maker := InitCols(mongoClient, config, ctx)
 	server := gin.Default()
+	server.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		Debug:            true, // remeber to off this for prod
+		AllowedMethods:   []string{"POST", "GET", "PATCH", "DELETE", "PURGE", "OPTIONS"},
+		AllowCredentials: true,
+		MaxAge:           3,
+	}))
 
 	// defer mongoClient.Disconnect(ctx)
 
