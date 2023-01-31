@@ -17,6 +17,7 @@ type Config struct {
 	ProductCol          string        `mapstructure:"PRODUCT_COL"`
 	UserCol             string        `mapstructure:"USER_COl"`
 	DbName              string        `mapstructure:"DB_NAME"`
+	TokenCol            string        `mapstructure:"TOKEN_COL"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

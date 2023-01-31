@@ -9,5 +9,5 @@ import (
 
 func AuthRoutes(router *gin.Engine, c controllers.AuthController, token_maker token.Maker) {
 	auth := router.Group("/v1/auth")
-	auth.POST("/")
+	auth.POST("/register", c.CreateUser())
 }

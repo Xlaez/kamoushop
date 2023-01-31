@@ -19,6 +19,7 @@ import (
 var (
 	tokenMaker      token.Maker
 	auth_controller controllers.AuthController
+	user_controller controllers.UserController
 )
 
 func InitTokenMaker(config utils.Config) error {
@@ -31,13 +32,16 @@ func InitTokenMaker(config utils.Config) error {
 	return nil
 }
 
-func InitCols(client *mongo.Client, config utils.Config, ctx context.Context) (*controllers.AuthController, token.Maker) {
+func InitCols(client *mongo.Client, config utils.Config, ctx context.Context) (*controllers.AuthController, *controllers.UserController, token.Maker) {
 	users_col := client.Database(config.DbName).Collection(config.UserCol)
+	token_col := client.Database(config.DbName).Collection(config.TokenCol)
 	// products_col := client.Database(config.DbName).Collection(config.ProductCol)
 
-	user_Service := api.NewAuthService(users_col, ctx)
-	auth_controller = controllers.NewAuthController(user_Service, tokenMaker, config)
-	return &auth_controller, tokenMaker
+	auth_service := api.NewAuthService(users_col, ctx)
+	user_service := api.NewUserService(users_col, ctx)
+	auth_controller = controllers.NewAuthController(auth_service, tokenMaker, config, *token_col)
+	user_controller = controllers.NewUserController(&user_service, tokenMaker, config)
+	return &auth_controller, &user_controller, tokenMaker
 }
 
 func Run() *gin.Engine {
@@ -63,8 +67,12 @@ func Run() *gin.Engine {
 
 	fmt.Println("MongoDB connection succesful!")
 
-	auth_col, token_maker := InitCols(mongoClient, config, ctx)
+	auth_col, users_col, token_maker := InitCols(mongoClient, config, ctx)
 	server := gin.Default()
+
+	// defer mongoClient.Disconnect(ctx)
+
 	routes.AuthRoutes(server, *auth_col, token_maker)
+	routes.UserRoutes(server, *users_col, token_maker)
 	return server
 }

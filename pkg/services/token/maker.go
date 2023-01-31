@@ -1,6 +1,8 @@
 package token
 
-import "time"
+import (
+	"time"
+)
 
 type Maker interface {
 	CreateToken(user_id string, duration time.Duration) (string, error)

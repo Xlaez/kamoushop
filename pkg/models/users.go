@@ -7,11 +7,13 @@ import (
 )
 
 type User struct {
-	ID         primitive.ObjectID   `json:"id,omitempty" bson:"_id"`
-	FirstName  string               `json:"first_name,omitempty" bson:"firstname"`
-	LastName   string               `json:"last_name,omitempty" bson:"lastname"`
-	Password   string               `json:"password,omitempty" bson:"password"`
-	Image      string               `json:"image,omitempty" bson:"image"`
+	ID        primitive.ObjectID `json:"id,omitempty" bson:"_id"`
+	FirstName string             `json:"first_name,omitempty" bson:"firstname"`
+	LastName  string             `json:"last_name,omitempty" bson:"lastname"`
+	Password  string             `json:"password,omitempty" bson:"password"`
+	Image     string             `json:"image,omitempty" bson:"image"`
+	// supports loginTypes like "facebook" "gmail" "password" and "apple"
+	LoginType  string               `json:"login_type" bson:"loginType" default:"password"`
 	BrandName  string               `json:"brand_name,omitempty" bson:"brandName"`
 	PhoneNO    string               `json:"phone_no,omitempty" bson:"phoneNo"`
 	Email      string               `json:"email,omitempty" bson:"email"`
