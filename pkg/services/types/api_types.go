@@ -29,3 +29,12 @@ type AddUser struct {
 	Email     string `json:"email" binding:"required,email"`
 	Password  string `json:"password" binding:"required,alphanum,min=7"`
 }
+
+type Login struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,alphanum,min=7"`
+}
+
+type GetUser struct {
+	ID string `uri:"id" binding:"required"`
+}

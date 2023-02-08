@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"kamoushop/pkg/models"
 	"kamoushop/pkg/services/api"
 	"kamoushop/pkg/services/token"
@@ -69,30 +68,63 @@ func (a *authController) CreateUser() gin.HandlerFunc {
 
 func (a *authController) LoginUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		var request types.Login
+		if err := ctx.ShouldBindJSON(&request); err != nil {
+			ctx.JSON(http.StatusBadRequest, errorRes(err))
+			return
+		}
+		user, err := a.s.Login(request)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, errorRes(err))
+			return
+		}
 
+		token, err := generateAuthTokens(ctx, a, user.ID, a.config.AccessTokenDuration)
+
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"tokens": token})
+	}
+}
+
+func (a *authController) GetUserById() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		// var request
 	}
 }
 
 func generateAuthTokens(ctx context.Context, a *authController, user_id primitive.ObjectID, duration time.Duration) (*tokens, error) {
 	access_token, err := a.maker.CreateToken(user_id.String(), duration)
+	if err != nil {
+		return &tokens{}, err
+	}
 	refresh_token, err := a.maker.CreateToken(user_id.String(), 6000*time.Second)
 
+	if err != nil {
+		return &tokens{}, err
+	}
+
 	// TODO: Fix this repetitoion issue with insertmany
-	token_one, err := a.t_col.InsertOne(ctx, models.Token{
+	_, err = a.t_col.InsertOne(ctx, models.Token{
 		Token:     access_token,
 		UserID:    user_id,
 		Type:      "access",
 		ExpiresAT: duration,
 	})
 
-	token_two, err := a.t_col.InsertOne(ctx, models.Token{
+	if err != nil {
+		return &tokens{}, err
+	}
+
+	_, err = a.t_col.InsertOne(ctx, models.Token{
 		Token:     refresh_token,
 		UserID:    user_id,
 		Type:      "refresh",
 		ExpiresAT: 6000 * time.Second,
 	})
-
-	fmt.Print(token_one, token_two)
 
 	if err != nil {
 		return &tokens{}, err

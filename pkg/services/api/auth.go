@@ -11,10 +11,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService interface {
 	CreateUser(data models.User) error
+	Login(data types.Login) (models.User, error)
+	GetUserById(id string) (models.User, error)
 }
 
 type authService struct {
@@ -59,12 +62,45 @@ func (a *authService) CreateUser(data models.User) error {
 	return nil
 }
 
-func GetUserByEmail(a *authService, email string) (types.User, error) {
-	var user types.User
+func (a *authService) Login(data types.Login) (models.User, error) {
+	user, err := GetUserByEmail(a, data.Email)
+
+	if err != nil {
+		return models.User{}, err
+	}
+
+	if err = password.ComparePassword(data.Password, user.Password); err != nil {
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			new_err := errors.New("password does not match")
+			return models.User{}, new_err
+		}
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
+func GetUserByEmail(a *authService, email string) (models.User, error) {
+	user := models.User{}
 	filter := bson.D{{Key: "email", Value: email}}
 
-	if err := a.col.FindOne(a.ctx, filter).Decode(&user); err != mongo.ErrNoDocuments && err != nil {
-		return types.User{}, err
+	if err := a.col.FindOne(a.ctx, filter).Decode(&user); err == mongo.ErrNoDocuments && err != nil {
+		return models.User{}, err
+	}
+	return user, nil
+}
+
+func (a *authService) GetUserById(id string) (models.User, error) {
+	user_id, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	user := models.User{}
+	filter := bson.D{{Key: "_id", Value: user_id}}
+
+	if err := a.col.FindOne(a.ctx, filter).Decode(&user); err == mongo.ErrNoDocuments && err != nil {
+		return models.User{}, err
 	}
 	return user, nil
 }

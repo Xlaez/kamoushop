@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	Cloudinary          string        `mapstructure:"CLOUDINARY_API_ENV"`
-	TokenKey            string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
+	TokenKey            string        `mapstructure:"TOKEN_KEY"`
 	AccessTokenDuration time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	MongoUserName       string        `mapstructure:"MONGO_INITDB_ROOT_USERNAME"`
 	MongoPassword       string        `mapstructure:"MONGO_INITDB_ROOT_PASSWORD"`

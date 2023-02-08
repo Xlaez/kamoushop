@@ -18,22 +18,22 @@ import (
 )
 
 var (
-	tokenMaker      token.Maker
+	// tokenMaker      token.Maker
 	auth_controller controllers.AuthController
 	user_controller controllers.UserController
 )
 
-func InitTokenMaker(config utils.Config) error {
+func InitTokenMaker(config utils.Config) (token.Maker, error) {
 	var err error
-	tokenMaker, err = token.NewPasetoMaker(config.TokenKey)
+	tokenMaker, err := token.NewPasetoMaker(config.TokenKey)
 
 	if err != nil {
-		return fmt.Errorf("cannot create the token maker: %w", err)
+		return nil, fmt.Errorf("cannot create the token maker: %w", err)
 	}
-	return nil
+	return tokenMaker, nil
 }
 
-func InitCols(client *mongo.Client, config utils.Config, ctx context.Context) (*controllers.AuthController, *controllers.UserController, token.Maker) {
+func InitCols(client *mongo.Client, config utils.Config, ctx context.Context, tokenMaker token.Maker) (*controllers.AuthController, *controllers.UserController) {
 	users_col := client.Database(config.DbName).Collection(config.UserCol)
 	token_col := client.Database(config.DbName).Collection(config.TokenCol)
 	// products_col := client.Database(config.DbName).Collection(config.ProductCol)
@@ -42,7 +42,7 @@ func InitCols(client *mongo.Client, config utils.Config, ctx context.Context) (*
 	user_service := api.NewUserService(users_col, ctx)
 	auth_controller = controllers.NewAuthController(auth_service, tokenMaker, config, *token_col)
 	user_controller = controllers.NewUserController(&user_service, tokenMaker, config)
-	return &auth_controller, &user_controller, tokenMaker
+	return &auth_controller, &user_controller
 }
 
 func Run() *gin.Engine {
@@ -53,7 +53,11 @@ func Run() *gin.Engine {
 	}
 
 	ctx := context.TODO()
-	InitTokenMaker(config)
+	tokenMaker, err := InitTokenMaker(config)
+
+	if err != nil {
+		log.Panic((err.Error()))
+	}
 
 	mongoConn := options.Client().ApplyURI(config.MongoUri)
 	mongoClient, err := mongo.Connect(ctx, mongoConn)
@@ -68,7 +72,7 @@ func Run() *gin.Engine {
 
 	fmt.Println("MongoDB connection succesful!")
 
-	auth_col, users_col, token_maker := InitCols(mongoClient, config, ctx)
+	auth_col, users_col := InitCols(mongoClient, config, ctx, tokenMaker)
 	server := gin.Default()
 	server.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -80,7 +84,7 @@ func Run() *gin.Engine {
 
 	// defer mongoClient.Disconnect(ctx)
 
-	routes.AuthRoutes(server, *auth_col, token_maker)
-	routes.UserRoutes(server, *users_col, token_maker)
+	routes.AuthRoutes(server, *auth_col, tokenMaker)
+	routes.UserRoutes(server, *users_col, tokenMaker)
 	return server
 }
