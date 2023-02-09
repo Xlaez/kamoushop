@@ -11,4 +11,5 @@ func AuthRoutes(router *gin.Engine, c controllers.AuthController, token_maker to
 	auth := router.Group("/v1/auth")
 	auth.POST("/register", c.CreateUser())
 	auth.POST("/login", c.LoginUser())
+	auth.POST("/validate", c.ValidateAcc())
 }

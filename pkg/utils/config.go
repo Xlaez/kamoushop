@@ -18,6 +18,7 @@ type Config struct {
 	UserCol             string        `mapstructure:"USER_COl"`
 	DbName              string        `mapstructure:"DB_NAME"`
 	TokenCol            string        `mapstructure:"TOKEN_COL"`
+	RedisUri            string        `mapstructure:"REDIS_URL"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

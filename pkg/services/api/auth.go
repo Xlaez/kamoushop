@@ -17,7 +17,7 @@ import (
 type AuthService interface {
 	CreateUser(data models.User) error
 	Login(data types.Login) (models.User, error)
-	GetUserById(id string) (models.User, error)
+	ValidateAcc(email string) error
 }
 
 type authService struct {
@@ -90,17 +90,13 @@ func GetUserByEmail(a *authService, email string) (models.User, error) {
 	return user, nil
 }
 
-func (a *authService) GetUserById(id string) (models.User, error) {
-	user_id, err := primitive.ObjectIDFromHex(id)
+func (a *authService) ValidateAcc(email string) error {
+	filter := bson.D{{Key: "email", Value: email}}
+	updateObj := bson.D{{Key: "$set", Value: bson.D{{Key: "isVerified", Value: true}}}}
+	_, err := a.col.UpdateOne(a.ctx, filter, updateObj)
+
 	if err != nil {
-		return models.User{}, err
+		return err
 	}
-
-	user := models.User{}
-	filter := bson.D{{Key: "_id", Value: user_id}}
-
-	if err := a.col.FindOne(a.ctx, filter).Decode(&user); err == mongo.ErrNoDocuments && err != nil {
-		return models.User{}, err
-	}
-	return user, nil
+	return nil
 }

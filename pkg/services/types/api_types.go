@@ -38,3 +38,7 @@ type Login struct {
 type GetUser struct {
 	ID string `uri:"id" binding:"required"`
 }
+
+type ValidateAcc struct {
+	Code string `json:"code" binding:"required,min=6,max=6"`
+}

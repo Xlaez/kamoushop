@@ -6,6 +6,7 @@ import (
 
 	"github.com/aead/chacha20poly1305"
 	"github.com/o1egl/paseto"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type PasetoMaker struct {
@@ -14,7 +15,6 @@ type PasetoMaker struct {
 }
 
 func NewPasetoMaker(symmetricKey string) (Maker, error) {
-	fmt.Print("keys", len(symmetricKey))
 	if len(symmetricKey) != chacha20poly1305.KeySize {
 		return nil, fmt.Errorf("invalid token key size, must be exactly %d characters", chacha20poly1305.KeySize)
 	}
@@ -27,7 +27,7 @@ func NewPasetoMaker(symmetricKey string) (Maker, error) {
 	return maker, nil
 }
 
-func (maker *PasetoMaker) CreateToken(user_id string, duration time.Duration) (string, error) {
+func (maker *PasetoMaker) CreateToken(user_id primitive.ObjectID, duration time.Duration) (string, error) {
 	payload, err := NewPayLoad(user_id, duration)
 
 	if err != nil {

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"kamoushop/pkg/models"
 	"kamoushop/pkg/services/api"
 	"kamoushop/pkg/services/token"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,13 +21,15 @@ import (
 type AuthController interface {
 	CreateUser() gin.HandlerFunc
 	LoginUser() gin.HandlerFunc
+	ValidateAcc() gin.HandlerFunc
 }
 
 type authController struct {
-	s      api.AuthService
-	maker  token.Maker
-	config utils.Config
-	t_col  mongo.Collection
+	s            api.AuthService
+	maker        token.Maker
+	config       utils.Config
+	t_col        mongo.Collection
+	redis_client *redis.Client
 }
 
 type tokens struct {
@@ -33,12 +37,13 @@ type tokens struct {
 	RefreshToken string
 }
 
-func NewAuthController(service api.AuthService, maker token.Maker, config utils.Config, token_col mongo.Collection) AuthController {
+func NewAuthController(service api.AuthService, maker token.Maker, config utils.Config, token_col mongo.Collection, redis_client *redis.Client) AuthController {
 	return &authController{
-		s:      service,
-		maker:  maker,
-		config: config,
-		t_col:  token_col,
+		s:            service,
+		maker:        maker,
+		config:       config,
+		t_col:        token_col,
+		redis_client: redis_client,
 	}
 }
 
@@ -60,9 +65,14 @@ func (a *authController) CreateUser() gin.HandlerFunc {
 			ctx.JSON(http.StatusBadRequest, errorRes(err))
 			return
 		}
+		code, err := sendVerificationCode(ctx, a, request.Email)
 
-		// TODO: set redis for auth codes
-		ctx.JSON(http.StatusCreated, msgRes("user created successfully!"))
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+		// TODO: send code via email
+		ctx.JSON(http.StatusCreated, gin.H{"code": code})
 	}
 }
 
@@ -90,18 +100,45 @@ func (a *authController) LoginUser() gin.HandlerFunc {
 	}
 }
 
-func (a *authController) GetUserById() gin.HandlerFunc {
+func (a *authController) ValidateAcc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// var request
+		var request types.ValidateAcc
+
+		if err := ctx.ShouldBindJSON(&request); err != nil {
+			ctx.JSON(http.StatusBadRequest, errorRes(err))
+			return
+		}
+
+		email, err := a.redis_client.Get(ctx, request.Code).Result()
+		if err == redis.Nil {
+			ctx.JSON(http.StatusNotFound, errorRes(errors.New("verification codehas expired, request for another")))
+			return
+		}
+
+		if err = a.s.ValidateAcc(email); err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+
+		ctx.JSON(http.StatusNoContent, "")
 	}
 }
 
+func sendVerificationCode(ctx context.Context, a *authController, email string) (string, error) {
+	random_code := utils.RandomStr(6)
+	//TODO: set expiration duration to 30 minutes
+	if err := a.redis_client.Set(ctx, random_code, email, 0).Err(); err != nil {
+		return "", err
+	}
+	return random_code, nil
+}
+
 func generateAuthTokens(ctx context.Context, a *authController, user_id primitive.ObjectID, duration time.Duration) (*tokens, error) {
-	access_token, err := a.maker.CreateToken(user_id.String(), duration)
+	access_token, err := a.maker.CreateToken(user_id, duration)
 	if err != nil {
 		return &tokens{}, err
 	}
-	refresh_token, err := a.maker.CreateToken(user_id.String(), 6000*time.Second)
+	refresh_token, err := a.maker.CreateToken(user_id, 6000*time.Second)
 
 	if err != nil {
 		return &tokens{}, err

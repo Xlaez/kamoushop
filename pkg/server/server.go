@@ -11,6 +11,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	cors "github.com/rs/cors/wrapper/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -21,6 +22,7 @@ var (
 	// tokenMaker      token.Maker
 	auth_controller controllers.AuthController
 	user_controller controllers.UserController
+	redis_client    *redis.Client
 )
 
 func InitTokenMaker(config utils.Config) (token.Maker, error) {
@@ -33,15 +35,15 @@ func InitTokenMaker(config utils.Config) (token.Maker, error) {
 	return tokenMaker, nil
 }
 
-func InitCols(client *mongo.Client, config utils.Config, ctx context.Context, tokenMaker token.Maker) (*controllers.AuthController, *controllers.UserController) {
+func InitCols(client *mongo.Client, config utils.Config, ctx context.Context, tokenMaker token.Maker, redis_client *redis.Client) (*controllers.AuthController, *controllers.UserController) {
 	users_col := client.Database(config.DbName).Collection(config.UserCol)
 	token_col := client.Database(config.DbName).Collection(config.TokenCol)
 	// products_col := client.Database(config.DbName).Collection(config.ProductCol)
 
 	auth_service := api.NewAuthService(users_col, ctx)
 	user_service := api.NewUserService(users_col, ctx)
-	auth_controller = controllers.NewAuthController(auth_service, tokenMaker, config, *token_col)
-	user_controller = controllers.NewUserController(&user_service, tokenMaker, config)
+	auth_controller = controllers.NewAuthController(auth_service, tokenMaker, config, *token_col, redis_client)
+	user_controller = controllers.NewUserController(user_service, tokenMaker, config)
 	return &auth_controller, &user_controller
 }
 
@@ -66,13 +68,29 @@ func Run() *gin.Engine {
 		log.Panic((err.Error()))
 	}
 
+	redis_client = redis.NewClient(&redis.Options{
+		Addr: config.RedisUri,
+	})
+
+	if _, err := redis_client.Ping(ctx).Result(); err != nil {
+		log.Panic(err.Error())
+	}
+
+	err = redis_client.Set(ctx, "test", "Redis on!", 0).Err()
+
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	fmt.Println("Redis client connected successfully!")
+
 	if err := mongoClient.Ping(ctx, readpref.Primary()); err != nil {
 		log.Panic((err.Error()))
 	}
 
 	fmt.Println("MongoDB connection succesful!")
 
-	auth_col, users_col := InitCols(mongoClient, config, ctx, tokenMaker)
+	auth_col, users_col := InitCols(mongoClient, config, ctx, tokenMaker, redis_client)
 	server := gin.Default()
 	server.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
