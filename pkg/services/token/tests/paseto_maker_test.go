@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestPasetoMaker(t *testing.T) {
 	maker, err := token.NewPasetoMaker(utils.RandomStr(32))
 	require.NoError(t, err)
 
-	user_id := uuid.New().String()
+	user_id := primitive.NewObjectID()
 	duration := time.Minute
 	issuedAt := time.Now()
 	expiresAt := time.Now().Add(duration)

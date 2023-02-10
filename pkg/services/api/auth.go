@@ -51,6 +51,7 @@ func (a *authService) CreateUser(data models.User) error {
 		LastName:  data.LastName,
 		Password:  hashedPass,
 		Email:     data.Email,
+		LoginType: "password",
 		CreatedAT: time.Now(),
 		UpdatedAT: time.Now(),
 	}
