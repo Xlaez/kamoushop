@@ -22,6 +22,7 @@ var (
 	// tokenMaker      token.Maker
 	auth_controller controllers.AuthController
 	user_controller controllers.UserController
+	prod_controller controllers.ProductController
 	redis_client    *redis.Client
 )
 
@@ -35,16 +36,19 @@ func InitTokenMaker(config utils.Config) (token.Maker, error) {
 	return tokenMaker, nil
 }
 
-func InitCols(client *mongo.Client, config utils.Config, ctx context.Context, tokenMaker token.Maker, redis_client *redis.Client) (*controllers.AuthController, *controllers.UserController) {
+func InitCols(client *mongo.Client, config utils.Config, ctx context.Context, tokenMaker token.Maker, redis_client *redis.Client) (*controllers.AuthController, *controllers.UserController, *controllers.ProductController) {
 	users_col := client.Database(config.DbName).Collection(config.UserCol)
 	token_col := client.Database(config.DbName).Collection(config.TokenCol)
-	// products_col := client.Database(config.DbName).Collection(config.ProductCol)
+	prod_col := client.Database(config.DbName).Collection(config.ProductCol)
 
 	auth_service := api.NewAuthService(users_col, ctx)
 	user_service := api.NewUserService(users_col, ctx)
+	prod_service := api.NewProductService(ctx, prod_col)
+
 	auth_controller = controllers.NewAuthController(auth_service, tokenMaker, config, *token_col, redis_client)
 	user_controller = controllers.NewUserController(user_service, tokenMaker, config)
-	return &auth_controller, &user_controller
+	prod_controller = controllers.NewProductController(prod_service, tokenMaker, config)
+	return &auth_controller, &user_controller, &prod_controller
 }
 
 func Run() *gin.Engine {
@@ -90,7 +94,7 @@ func Run() *gin.Engine {
 
 	fmt.Println("MongoDB connection succesful!")
 
-	auth_col, users_col := InitCols(mongoClient, config, ctx, tokenMaker, redis_client)
+	auth_col, users_col, prod_col := InitCols(mongoClient, config, ctx, tokenMaker, redis_client)
 	server := gin.Default()
 	server.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -104,5 +108,6 @@ func Run() *gin.Engine {
 
 	routes.AuthRoutes(server, *auth_col, tokenMaker)
 	routes.UserRoutes(server, *users_col, tokenMaker)
+	routes.PoductRoutes(server, *prod_col, tokenMaker)
 	return server
 }

@@ -61,6 +61,7 @@ func (a *authController) CreateUser() gin.HandlerFunc {
 			LastName:  request.LastName,
 			Email:     request.Email,
 			Password:  request.Password,
+			StarredBy: make([]primitive.ObjectID, 500),
 		}); err != nil {
 			ctx.JSON(http.StatusBadRequest, errorRes(err))
 			return

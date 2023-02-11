@@ -15,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -28,6 +29,10 @@ type UserController interface {
 	UpdateImage() gin.HandlerFunc
 	UpdateProfile() gin.HandlerFunc
 	UpdateBrandName() gin.HandlerFunc
+	GetAllUsers() gin.HandlerFunc
+	QueryBrands() gin.HandlerFunc
+	DeleteUser() gin.HandlerFunc
+	StarUserShop() gin.HandlerFunc
 }
 
 type userController struct {
@@ -199,6 +204,116 @@ func (u *userController) UpdateBrandName() gin.HandlerFunc {
 		payload := ctx.MustGet(authPayload).(*token.Payload)
 		filter := bson.D{{Key: "_id", Value: payload.UserID}}
 		updateObj := bson.D{{Key: "$set", Value: bson.D{{Key: "brandName", Value: request.BrandName}, {Key: "updatedAt", Value: time.Now()}}}}
+
+		if err = u.s.UpdateUser(filter, updateObj); err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+
+		ctx.JSON(http.StatusOK, msgRes("updated"))
+	}
+}
+
+func (u *userController) GetAllUsers() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var request types.GetUsers
+
+		if err := ctx.ShouldBindQuery(&request); err != nil {
+			ctx.JSON(http.StatusBadRequest, errorRes(err))
+			return
+		}
+
+		users, totalDocs, err := u.s.GetAllUsers(request.Limit, request.Page)
+
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				ctx.JSON(http.StatusNotFound, errorRes(errors.New("resource not found")))
+				return
+			}
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"users": users, "totalDocuments": totalDocs})
+	}
+}
+
+func (u *userController) QueryBrands() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var request types.QueryBrands
+
+		if err := ctx.ShouldBindQuery(&request); err != nil {
+			ctx.JSON(http.StatusBadRequest, errorRes(err))
+			return
+		}
+
+		brands, totalDocs, err := u.s.QueryBrands(request.Keyword, request.Limit, request.Page)
+
+		if err != nil {
+			if err == mongo.ErrNoDocuments {
+				ctx.JSON(http.StatusNotFound, errorRes(errors.New("resource not found")))
+				return
+			}
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{"brands": brands, "totalDocuments": totalDocs})
+	}
+}
+
+func (u *userController) DeleteUser() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var request types.DeleteUser
+		if err := ctx.ShouldBindUri(&request); err != nil {
+			ctx.JSON(http.StatusBadRequest, errorRes(err))
+			return
+		}
+
+		payload := ctx.MustGet(authPayload).(*token.Payload)
+
+		user, err := u.s.FindOne(bson.D{primitive.E{Key: "_id", Value: payload.UserID}})
+
+		if err != nil {
+			ctx.JSON(http.StatusExpectationFailed, errorRes(err))
+			return
+		}
+
+		if err = password.ComparePassword(request.Password, user.Password); err != nil {
+			if err == bcrypt.ErrMismatchedHashAndPassword {
+				ctx.JSON(http.StatusBadRequest, errorRes(errors.New("password doesn't match")))
+				return
+			}
+			ctx.JSON(http.StatusBadRequest, errorRes(err))
+			return
+		}
+
+		if err = u.s.DeleteUser(payload.UserID); err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+
+		ctx.JSON(http.StatusOK, msgRes("deleted"))
+	}
+}
+
+func (u *userController) StarUserShop() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var request types.StarShop
+		if err := ctx.ShouldBindUri(&request); err != nil {
+			ctx.JSON(http.StatusBadRequest, errorRes(err))
+			return
+		}
+
+		shop_id, err := primitive.ObjectIDFromHex(request.ID)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+
+		payload := ctx.MustGet(authPayload).(*token.Payload)
+		filter := bson.D{primitive.E{Key: "_id", Value: shop_id}}
+		updateObj := bson.D{{Key: "$inc", Value: bson.D{{Key: "stars", Value: 1}}}, {Key: "$addToSet", Value: bson.D{{Key: "starredBy", Value: payload.UserID}}}}
 
 		if err = u.s.UpdateUser(filter, updateObj); err != nil {
 			ctx.JSON(http.StatusInternalServerError, errorRes(err))

@@ -16,7 +16,7 @@ type User struct {
 	Email      string               `json:"email,omitempty" bson:"email"`
 	Instagram  string               `json:"instagram,omitempty" bson:"instagram"`
 	Facebook   string               `json:"facebook,omitempty" bson:"facebook"`
-	Stars      string               `json:"stars,omitempty" bson:"stars" default:"0"`
+	Stars      int64                `json:"stars,omitempty" bson:"stars" default:"0"`
 	StarredBy  []primitive.ObjectID `json:"starred_by" bson:"starredBy"`
 	IsVerified bool                 `json:"is_verified" bson:"isVerified" default:"false"`
 	CreatedAT  time.Time            `json:"created_at" bson:"createdAt"`
@@ -60,4 +60,47 @@ type UpdateProfile struct {
 
 type UpdateBrandName struct {
 	BrandName string `json:"brand_name"`
+}
+
+type GetUsers struct {
+	Limit int64 `form:"limit" biniding:"required"`
+	Page  int64 `form:"page" binding:"required"`
+}
+
+type QueryBrands struct {
+	Limit   int64  `form:"limit" biniding:"required"`
+	Page    int64  `form:"page" binding:"required"`
+	Keyword string `form:"keyword" binding:"required"`
+}
+
+type Product struct {
+	Price       int    `form:"price" binding:"required"`
+	Name        string `form:"name" binding:"required,min=3"`
+	Image       string `form:"image"`
+	Description string `form:"description" binding:"required,min=5"`
+	TotalStock  int    `form:"total_stock" binding:"required,min=1"`
+}
+
+type GetProductsByUserId struct {
+	Limit  int64  `form:"limit" biniding:"required"`
+	Page   int64  `form:"page" binding:"required"`
+	UserID string `form:"user_id" binding:"required"`
+}
+
+type DeleteUser struct {
+	Password string `uri:"password" binding:"required"`
+}
+
+type StarShop struct {
+	ID string `uri:"id" binding:"required"`
+}
+
+type GetProdById struct {
+	ID string `uri:"id" binding:"required"`
+}
+
+type UpdateProduct struct {
+	ID          string `json:"id" binding:"required"`
+	Description string `json:"description"`
+	Price       int64  `json:"price"`
 }

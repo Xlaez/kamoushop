@@ -19,8 +19,8 @@ type User struct {
 	Email      string               `json:"email,omitempty" bson:"email"`
 	Instagram  string               `json:"instagram,omitempty" bson:"instagram"`
 	Facebook   string               `json:"facebook,omitempty" bson:"facebook"`
-	Stars      string               `json:"stars,omitempty" bson:"stars" default:"0"`
-	StarredBy  []primitive.ObjectID `json:"starred_by" bson:"starredBy"`
+	Stars      int64                `json:"stars" bson:"stars" default:"0"`
+	StarredBy  []primitive.ObjectID `json:"starred_by" bson:"starredBy" default:"[]"`
 	IsVerified bool                 `json:"is_verified" bson:"isVerified" default:"false"`
 	CreatedAT  time.Time            `json:"created_at" bson:"createdAt"`
 	UpdatedAT  time.Time            `json:"updated_at" bson:"updatedAt"`

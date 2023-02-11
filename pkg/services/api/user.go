@@ -16,6 +16,9 @@ type UserService interface {
 	GetUserByIdWithPassword(id primitive.ObjectID) (models.User, error)
 	UpdateUser(filter bson.D, updateObj bson.D) error
 	FindOne(filter bson.D) (models.User, error)
+	GetAllUsers(limit int64, page int64) ([]types.User, int64, error)
+	QueryBrands(brand_name_keyword string, limit int64, page int64) ([]types.User, int64, error)
+	DeleteUser(userId primitive.ObjectID) error
 }
 
 type userService struct {
@@ -63,4 +66,62 @@ func (u *userService) FindOne(filter bson.D) (models.User, error) {
 		return models.User{}, err
 	}
 	return user, nil
+}
+
+func (u *userService) GetAllUsers(limit int64, page int64) ([]types.User, int64, error) {
+	counter := int64(1)
+	skip := (page - counter) * limit
+	cursor, err := u.col.Find(u.ctx, bson.D{}, &options.FindOptions{Limit: &limit, Skip: &skip})
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	count, err := u.col.CountDocuments(u.ctx, bson.D{})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var users []types.User
+
+	if err = cursor.All(u.ctx, &users); err != nil {
+		return nil, 0, err
+	}
+
+	return users, count, nil
+}
+
+func (u *userService) QueryBrands(brand_name_keyword string, limit int64, page int64) ([]types.User, int64, error) {
+	counter := int64(1)
+	skip := (page - counter) * limit
+	filter := primitive.Regex{Pattern: brand_name_keyword, Options: "i"}
+	cursor, err := u.col.Find(u.ctx, bson.D{{Key: "brandName", Value: filter}}, &options.FindOptions{Limit: &limit, Skip: &skip})
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	count, err := u.col.CountDocuments(u.ctx, bson.D{{Key: "brandName", Value: filter}})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var brands []types.User
+
+	if err = cursor.All(u.ctx, &brands); err != nil {
+		return nil, 0, err
+	}
+
+	return brands, count, nil
+}
+
+func (u *userService) DeleteUser(userId primitive.ObjectID) error {
+	filter := bson.D{primitive.E{Key: "_id", Value: userId}}
+
+	_, err := u.col.DeleteOne(u.ctx, filter, options.Delete())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
