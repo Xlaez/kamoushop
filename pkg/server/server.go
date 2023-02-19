@@ -97,7 +97,7 @@ func Run() *gin.Engine {
 	auth_col, users_col, prod_col := InitCols(mongoClient, config, ctx, tokenMaker, redis_client)
 	server := gin.Default()
 	server.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   []string{"http://127.0.0.1:5500"},
 		Debug:            true, // remeber to off this for prod
 		AllowedMethods:   []string{"POST", "GET", "PATCH", "DELETE", "PURGE", "OPTIONS"},
 		AllowCredentials: true,

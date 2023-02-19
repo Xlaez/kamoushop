@@ -218,3 +218,10 @@ func (p *productController) UpdateProduct() gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, msgRes("updated"))
 	}
 }
+
+
+func (p *productController) AddToCart()gin.HandlerFunc{
+	return func(ctx *gin.Context){
+		
+	}
+}

@@ -24,4 +24,12 @@ type User struct {
 	IsVerified bool                 `json:"is_verified" bson:"isVerified" default:"false"`
 	CreatedAT  time.Time            `json:"created_at" bson:"createdAt"`
 	UpdatedAT  time.Time            `json:"updated_at" bson:"updatedAt"`
+	UserCart   []UserProduct        `json:"user_cart" bson:"userCart"`
+}
+
+type UserProduct struct {
+	ID    primitive.ObjectID `json:"id" bson:"_id"`
+	Name  string             `json:"name"  bson:"name"`
+	Price int64              `json:"price" bson:"price"`
+	Image string             `json:"image" bson:"image"`
 }

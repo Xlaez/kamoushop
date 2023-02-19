@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"kamoushop/pkg/models"
 	"kamoushop/pkg/services/types"
@@ -32,6 +33,13 @@ func NewProductService(ctx context.Context, col *mongo.Collection) ProductServic
 		ctx: ctx,
 	}
 }
+
+var (
+	ErrCantFindProduct = errors.New("can't find product")
+	ErrCantUpdateUser  = errors.New("cannot add product to cart")
+	ErrCantRemoveItem  = errors.New("cannot remove item from cart")
+	ErrCantGetItem     = errors.New("cannot get item from cart ")
+)
 
 func (p *productService) CreateProduct(prod types.Product, userId primitive.ObjectID) (*mongo.InsertOneResult, error) {
 	id := primitive.NewObjectID()
@@ -99,3 +107,26 @@ func (p *productService) UpdateOne(filter bson.D, updateObj bson.D) error {
 	}
 	return nil
 }
+
+// func (p *productService) AddToCart(product_id primitive.ObjectID, user_id primitive.ObjectID) error {
+// 	cursor, err := p.col.Find(p.ctx, bson.D{{Key: "_id", Value: product_id}})
+
+// 	if err != nil {
+// 		return ErrCantFindProduct
+// 	}
+
+// 	var cart []models.UserProduct
+
+// 	if err = cursor.All(p.ctx, &cart); err != nil {
+// 		return ErrCantFindProduct
+// 	}
+
+// 	filter := bson.D{primitive.E{Key: "_id", Value: user_id}}
+// 	updateObj := bson.D{{Key: "$push", Value: bson.D{primitive.E{Key: "userCart", Value: bson.D{{Key: "each", Value: cart}}}}}}
+// 	if _, err = u.col.UpdateOne(u.ctx, filter, updateObj); err != nil {
+// 		return ErrCantUpdateUser
+// 	}
+
+// 	return nil
+
+// }
