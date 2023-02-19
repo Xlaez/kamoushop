@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"kamoushop/pkg/models"
 	"kamoushop/pkg/services/types"
 
@@ -20,7 +19,7 @@ type UserService interface {
 	GetAllUsers(limit int64, page int64) ([]types.User, int64, error)
 	QueryBrands(brand_name_keyword string, limit int64, page int64) ([]types.User, int64, error)
 	DeleteUser(userId primitive.ObjectID) error
-	AddToCart(user_id primitive.ObjectID, cart []models.UserProduct) error
+	// AddToCart(user_id primitive.ObjectID, cart []models.UserProduct) error
 }
 
 type userService struct {
@@ -128,11 +127,11 @@ func (u *userService) DeleteUser(userId primitive.ObjectID) error {
 	return nil
 }
 
-func (u *userService) AddToCart(user_id primitive.ObjectID, cart []models.UserProduct) error {
-	filter := bson.D{primitive.E{Key: "_id", Value: user_id}}
-	updateObj := bson.D{{Key: "$push", Value: bson.D{primitive.E{Key: "userCart", Value: bson.D{{Key: "each", Value: cart}}}}}}
-	if _, err := u.col.UpdateOne(u.ctx, filter, updateObj); err != nil {
-		return errors.New("cannot update user")
-	}
-	return nil
-}
+// func (u *userService) AddToCart(user_id primitive.ObjectID, cart []models.UserProduct) error {
+// 	filter := bson.D{primitive.E{Key: "_id", Value: user_id}}
+// 	updateObj := bson.D{{Key: "$push", Value: bson.D{primitive.E{Key: "userCart", Value: bson.D{{Key: "each", Value: cart}}}}}}
+// 	if _, err := u.col.UpdateOne(u.ctx, filter, updateObj); err != nil {
+// 		return errors.New("cannot update user")
+// 	}
+// 	return nil
+// }

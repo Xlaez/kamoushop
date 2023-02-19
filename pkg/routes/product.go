@@ -16,4 +16,5 @@ func PoductRoutes(router *gin.Engine, c controllers.ProductController, token_mak
 	products.PATCH("/update", c.UpdateProduct())
 	products.POST("/", c.CreateProduct())
 	products.DELETE("/:id", c.DeleteProduct())
+	products.POST("/add-to-cart", c.AddToCart())
 }

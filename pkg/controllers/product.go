@@ -24,6 +24,7 @@ type ProductController interface {
 	GetProdById() gin.HandlerFunc
 	DeleteProduct() gin.HandlerFunc
 	UpdateProduct() gin.HandlerFunc
+	AddToCart() gin.HandlerFunc
 }
 
 type productController struct {
@@ -222,6 +223,28 @@ func (p *productController) UpdateProduct() gin.HandlerFunc {
 
 func (p *productController) AddToCart() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		var request types.AddToCart
 
+		if err := ctx.ShouldBindJSON(&request); err != nil {
+			ctx.JSON(http.StatusBadRequest, errorRes(err))
+			return
+		}
+
+		payload, _ := ctx.MustGet(authPayload).(*token.Payload)
+
+		id := payload.UserID
+		prod_id, er := primitive.ObjectIDFromHex(request.ProdID)
+
+		if er != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(er))
+			return
+		}
+
+		if er = p.s.AddToCart(prod_id, id); er != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(er))
+			return
+		}
+
+		ctx.JSON(http.StatusOK, msgRes("added to cart"))
 	}
 }

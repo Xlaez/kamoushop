@@ -20,18 +20,20 @@ type ProductService interface {
 	GetProdById(id primitive.ObjectID) (models.Product, error)
 	DeleteProduct(id primitive.ObjectID) error
 	UpdateOne(filter bson.D, updateObj bson.D) error
-	AddToCart(product_id primitive.ObjectID, user_id primitive.ObjectID) ([]models.UserProduct, error)
+	AddToCart(product_id primitive.ObjectID, user_id primitive.ObjectID) error
 }
 
 type productService struct {
-	col *mongo.Collection
-	ctx context.Context
+	col      *mongo.Collection
+	ctx      context.Context
+	user_col *mongo.Collection
 }
 
-func NewProductService(ctx context.Context, col *mongo.Collection) ProductService {
+func NewProductService(ctx context.Context, col *mongo.Collection, user_col *mongo.Collection) ProductService {
 	return &productService{
-		col: col,
-		ctx: ctx,
+		col:      col,
+		ctx:      ctx,
+		user_col: user_col,
 	}
 }
 
@@ -109,17 +111,23 @@ func (p *productService) UpdateOne(filter bson.D, updateObj bson.D) error {
 	return nil
 }
 
-func (p *productService) AddToCart(product_id primitive.ObjectID, user_id primitive.ObjectID) ([]models.UserProduct, error) {
-	cursor, err := p.col.Find(p.ctx, bson.D{{Key: "_id", Value: product_id}})
+func (p *productService) AddToCart(product_id primitive.ObjectID, user_id primitive.ObjectID) error {
+	cursor, err := p.col.Find(p.ctx, bson.D{primitive.E{Key: "_id", Value: product_id}})
 
 	if err != nil {
-		return nil, ErrCantFindProduct
+		return ErrCantFindProduct
 	}
 
 	var cart []models.UserProduct
 
 	if err = cursor.All(p.ctx, &cart); err != nil {
-		return nil, ErrCantFindProduct
+		return err
 	}
-	return cart, nil
+
+	filter := bson.D{primitive.E{Key: "_id", Value: user_id}}
+	updateObj := bson.D{{Key: "$push", Value: bson.D{primitive.E{Key: "userCart", Value: bson.D{{Key: "$each", Value: cart}}}}}}
+	if _, err := p.user_col.UpdateOne(p.ctx, filter, updateObj); err != nil {
+		return ErrCantUpdateUser
+	}
+	return nil
 }

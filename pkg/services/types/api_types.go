@@ -104,3 +104,7 @@ type UpdateProduct struct {
 	Description string `json:"description"`
 	Price       int64  `json:"price"`
 }
+
+type AddToCart struct {
+	ProdID string `json:"prod_id" binidng:"required"`
+}
