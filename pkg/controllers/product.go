@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"kamoushop/pkg/libs"
 	"kamoushop/pkg/models"
 	"kamoushop/pkg/services/api"
@@ -195,7 +196,7 @@ func (p *productController) UpdateProduct() gin.HandlerFunc {
 
 		filter := bson.D{primitive.E{Key: "_id", Value: id}}
 		descrObj := bson.D{{Key: "description", Value: request.Description}}
-		priceObj := bson.D{{Key: "price", Value: request.Price}}
+		priceObj := bson.D{{Key: "price", Value: fmt.Sprint(request.Price)}}
 
 		var updateObj bson.D
 
@@ -219,9 +220,8 @@ func (p *productController) UpdateProduct() gin.HandlerFunc {
 	}
 }
 
+func (p *productController) AddToCart() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
 
-func (p *productController) AddToCart()gin.HandlerFunc{
-	return func(ctx *gin.Context){
-		
 	}
 }

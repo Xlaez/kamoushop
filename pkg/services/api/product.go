@@ -20,6 +20,7 @@ type ProductService interface {
 	GetProdById(id primitive.ObjectID) (models.Product, error)
 	DeleteProduct(id primitive.ObjectID) error
 	UpdateOne(filter bson.D, updateObj bson.D) error
+	AddToCart(product_id primitive.ObjectID, user_id primitive.ObjectID) ([]models.UserProduct, error)
 }
 
 type productService struct {
@@ -108,25 +109,17 @@ func (p *productService) UpdateOne(filter bson.D, updateObj bson.D) error {
 	return nil
 }
 
-// func (p *productService) AddToCart(product_id primitive.ObjectID, user_id primitive.ObjectID) error {
-// 	cursor, err := p.col.Find(p.ctx, bson.D{{Key: "_id", Value: product_id}})
+func (p *productService) AddToCart(product_id primitive.ObjectID, user_id primitive.ObjectID) ([]models.UserProduct, error) {
+	cursor, err := p.col.Find(p.ctx, bson.D{{Key: "_id", Value: product_id}})
 
-// 	if err != nil {
-// 		return ErrCantFindProduct
-// 	}
+	if err != nil {
+		return nil, ErrCantFindProduct
+	}
 
-// 	var cart []models.UserProduct
+	var cart []models.UserProduct
 
-// 	if err = cursor.All(p.ctx, &cart); err != nil {
-// 		return ErrCantFindProduct
-// 	}
-
-// 	filter := bson.D{primitive.E{Key: "_id", Value: user_id}}
-// 	updateObj := bson.D{{Key: "$push", Value: bson.D{primitive.E{Key: "userCart", Value: bson.D{{Key: "each", Value: cart}}}}}}
-// 	if _, err = u.col.UpdateOne(u.ctx, filter, updateObj); err != nil {
-// 		return ErrCantUpdateUser
-// 	}
-
-// 	return nil
-
-// }
+	if err = cursor.All(p.ctx, &cart); err != nil {
+		return nil, ErrCantFindProduct
+	}
+	return cart, nil
+}
