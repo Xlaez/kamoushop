@@ -24,10 +24,20 @@ type User struct {
 	IsVerified bool                 `json:"is_verified" bson:"isVerified" default:"false"`
 	CreatedAT  time.Time            `json:"created_at" bson:"createdAt"`
 	UpdatedAT  time.Time            `json:"updated_at" bson:"updatedAt"`
-	UserCart   []UserProduct        `json:"user_cart" bson:"userCart"`
+	UserCart   UserCart             `json:"user_cart" bson:"userCart"`
 }
 
-type UserProduct struct {
+type UserCart struct {
+	Products []Prod  `json:"products" bson:"products"`
+	Entries  []Entry `json:"entries" bson:"entries"`
+}
+
+type Entry struct {
+	ProdID primitive.ObjectID `json:"prod_id" bson:"prodId"`
+	Count  int64              `json:"count" bson:"count"`
+}
+
+type Prod struct {
 	ID    primitive.ObjectID `json:"id" bson:"_id"`
 	Name  string             `json:"name"  bson:"name"`
 	Price string             `json:"price" bson:"price"`

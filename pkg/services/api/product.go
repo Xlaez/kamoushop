@@ -118,14 +118,45 @@ func (p *productService) AddToCart(product_id primitive.ObjectID, user_id primit
 		return ErrCantFindProduct
 	}
 
-	var cart []models.UserProduct
+	var cart_prod []models.Prod
 
-	if err = cursor.All(p.ctx, &cart); err != nil {
+	if err = cursor.All(p.ctx, &cart_prod); err != nil {
 		return err
 	}
 
+	var current_user models.User
+	if err = p.user_col.FindOne(p.ctx, bson.D{primitive.E{Key: "_id", Value: user_id}}).Decode(&current_user); err != nil {
+		return err
+	}
+
+	var updateObj bson.D
+	var entries []models.Entry
+
+	var entry models.Entry
+	// user_entry := current_user.UserCart.Entries
+
+	// for i := 0; i < len(user_entry); i++ {
+	// entry = models.Entry{
+	// 	Count:  user_entry[i].Count + int64(1),
+	// 	ProdID: product_id,
+	// }
+	// if user_entry[i].ProdID == product_id {
+	// 	fmt.Println("here first")
+	// 	entries = append(entries, entry)
+
+	// 	updateObj = bson.D{{Key: "$set", Value: bson.D{primitive.E{Key: "userCart.entries", Value: bson.D{{Key: "$each", Value: entries}}}}}}
+	// } else {
+	entry = models.Entry{
+		ProdID: product_id,
+		Count:  int64(1),
+	}
+	entries = append(entries, entry)
+	updateObj = bson.D{{Key: "$push", Value: bson.D{primitive.E{Key: "userCart.products", Value: bson.D{{Key: "$each", Value: cart_prod}}}}}, {Key: "$push", Value: bson.D{primitive.E{Key: "userCart.entries", Value: bson.D{{Key: "$each", Value: entries}}}}}}
+
+	// }
+	// }
+
 	filter := bson.D{primitive.E{Key: "_id", Value: user_id}}
-	updateObj := bson.D{{Key: "$push", Value: bson.D{primitive.E{Key: "userCart", Value: bson.D{{Key: "$each", Value: cart}}}}}}
 	if _, err := p.user_col.UpdateOne(p.ctx, filter, updateObj); err != nil {
 		return ErrCantUpdateUser
 	}
