@@ -14,9 +14,10 @@ type Config struct {
 	MongoPassword       string        `mapstructure:"MONGO_INITDB_ROOT_PASSWORD"`
 	MongoUri            string        `mapstructure:"MONGODB_LOCAL_URI"`
 	Port                string        `mapstructure:"PORT"`
+	DbName              string        `mapstructure:"DB_NAME"`
 	ProductCol          string        `mapstructure:"PRODUCT_COL"`
 	UserCol             string        `mapstructure:"USER_COl"`
-	DbName              string        `mapstructure:"DB_NAME"`
+	OrderCol            string        `mapstructure:"ORDER_COL"`
 	TokenCol            string        `mapstructure:"TOKEN_COL"`
 	RedisUri            string        `mapstructure:"REDIS_URL"`
 }

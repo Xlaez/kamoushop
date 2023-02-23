@@ -28,18 +28,12 @@ type User struct {
 }
 
 type UserCart struct {
-	Products []Prod  `json:"products" bson:"products"`
-	Entries  []Entry `json:"entries" bson:"entries"`
-}
-
-type Entry struct {
-	ProdID primitive.ObjectID `json:"prod_id" bson:"prodId"`
-	Count  int64              `json:"count" bson:"count"`
+	Products []Prod `json:"products" bson:"products"`
 }
 
 type Prod struct {
 	ID    primitive.ObjectID `json:"id" bson:"_id"`
 	Name  string             `json:"name"  bson:"name"`
-	Price string             `json:"price" bson:"price"`
+	Price int64              `json:"price" bson:"price"`
 	Image string             `json:"image" bson:"image"`
 }

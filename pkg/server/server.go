@@ -40,10 +40,11 @@ func InitCols(client *mongo.Client, config utils.Config, ctx context.Context, to
 	users_col := client.Database(config.DbName).Collection(config.UserCol)
 	token_col := client.Database(config.DbName).Collection(config.TokenCol)
 	prod_col := client.Database(config.DbName).Collection(config.ProductCol)
+	order_col := client.Database(config.DbName).Collection(config.OrderCol)
 
 	auth_service := api.NewAuthService(users_col, ctx)
 	user_service := api.NewUserService(users_col, ctx)
-	prod_service := api.NewProductService(ctx, prod_col, users_col)
+	prod_service := api.NewProductService(ctx, prod_col, users_col, order_col)
 
 	auth_controller = controllers.NewAuthController(auth_service, tokenMaker, config, *token_col, redis_client)
 	user_controller = controllers.NewUserController(user_service, tokenMaker, config)

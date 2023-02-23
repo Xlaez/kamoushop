@@ -78,7 +78,6 @@ type Product struct {
 	Name        string `form:"name" binding:"required,min=3"`
 	Image       string `form:"image"`
 	Description string `form:"description" binding:"required,min=5"`
-	TotalStock  int    `form:"total_stock" binding:"required,min=1"`
 }
 
 type GetProductsByUserId struct {

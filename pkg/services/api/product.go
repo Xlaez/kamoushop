@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"kamoushop/pkg/models"
 	"kamoushop/pkg/services/types"
 	"time"
@@ -21,19 +20,23 @@ type ProductService interface {
 	DeleteProduct(id primitive.ObjectID) error
 	UpdateOne(filter bson.D, updateObj bson.D) error
 	AddToCart(product_id primitive.ObjectID, user_id primitive.ObjectID) error
+	RemoveFromCart(product_id primitive.ObjectID, user_id primitive.ObjectID) error
+	MakeOrder(user_id primitive.ObjectID) (models.Order, error)
 }
 
 type productService struct {
-	col      *mongo.Collection
-	ctx      context.Context
-	user_col *mongo.Collection
+	col       *mongo.Collection
+	ctx       context.Context
+	user_col  *mongo.Collection
+	order_col *mongo.Collection
 }
 
-func NewProductService(ctx context.Context, col *mongo.Collection, user_col *mongo.Collection) ProductService {
+func NewProductService(ctx context.Context, col *mongo.Collection, user_col *mongo.Collection, order_col *mongo.Collection) ProductService {
 	return &productService{
-		col:      col,
-		ctx:      ctx,
-		user_col: user_col,
+		col:       col,
+		ctx:       ctx,
+		user_col:  user_col,
+		order_col: order_col,
 	}
 }
 
@@ -49,11 +52,10 @@ func (p *productService) CreateProduct(prod types.Product, userId primitive.Obje
 
 	product := models.Product{
 		ID:          id,
-		Price:       fmt.Sprint("$", prod.Price),
+		Price:       int64(prod.Price),
 		Image:       prod.Image,
 		Name:        prod.Name,
 		Description: prod.Description,
-		TotalStock:  prod.TotalStock,
 		UserID:      userId,
 		CreatedAT:   time.Now(),
 		UpdatedAT:   time.Now(),
@@ -124,41 +126,59 @@ func (p *productService) AddToCart(product_id primitive.ObjectID, user_id primit
 		return err
 	}
 
-	var current_user models.User
-	if err = p.user_col.FindOne(p.ctx, bson.D{primitive.E{Key: "_id", Value: user_id}}).Decode(&current_user); err != nil {
-		return err
-	}
-
-	var updateObj bson.D
-	var entries []models.Entry
-
-	var entry models.Entry
-	// user_entry := current_user.UserCart.Entries
-
-	// for i := 0; i < len(user_entry); i++ {
-	// entry = models.Entry{
-	// 	Count:  user_entry[i].Count + int64(1),
-	// 	ProdID: product_id,
-	// }
-	// if user_entry[i].ProdID == product_id {
-	// 	fmt.Println("here first")
-	// 	entries = append(entries, entry)
-
-	// 	updateObj = bson.D{{Key: "$set", Value: bson.D{primitive.E{Key: "userCart.entries", Value: bson.D{{Key: "$each", Value: entries}}}}}}
-	// } else {
-	entry = models.Entry{
-		ProdID: product_id,
-		Count:  int64(1),
-	}
-	entries = append(entries, entry)
-	updateObj = bson.D{{Key: "$push", Value: bson.D{primitive.E{Key: "userCart.products", Value: bson.D{{Key: "$each", Value: cart_prod}}}}}, {Key: "$push", Value: bson.D{primitive.E{Key: "userCart.entries", Value: bson.D{{Key: "$each", Value: entries}}}}}}
-
-	// }
-	// }
+	updateObj := bson.D{{Key: "$push", Value: bson.D{primitive.E{Key: "userCart.products", Value: bson.D{{Key: "$each", Value: cart_prod}}}}}}
 
 	filter := bson.D{primitive.E{Key: "_id", Value: user_id}}
 	if _, err := p.user_col.UpdateOne(p.ctx, filter, updateObj); err != nil {
 		return ErrCantUpdateUser
 	}
 	return nil
+}
+
+func (p *productService) RemoveFromCart(product_id primitive.ObjectID, user_id primitive.ObjectID) error {
+	filter := bson.D{primitive.E{Key: "_id", Value: user_id}}
+	update := bson.M{"$pull": bson.M{"userCart.products": bson.M{"_id": product_id}}}
+	if _, err := p.user_col.UpdateMany(p.ctx, filter, update); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *productService) MakeOrder(user_id primitive.ObjectID) (models.Order, error) {
+	var user models.User
+	filter := bson.D{primitive.E{Key: "_id", Value: user_id}}
+
+	if err := p.user_col.FindOne(p.ctx, filter, options.FindOne()).Decode(&user); err != nil {
+		return models.Order{}, err
+	}
+
+	var price int64 = 0
+	for _, prod := range user.UserCart.Products {
+		price += prod.Price
+	}
+
+	order := models.Order{
+		ID:         primitive.NewObjectID(),
+		UserID:     user_id,
+		TotalPrice: price,
+		CreatedAT:  time.Now(),
+		UpdatedAT:  time.Now(),
+	}
+
+	// Add to the order model
+	_, err := p.order_col.InsertOne(p.ctx, order, options.InsertOne())
+	if err != nil {
+		return models.Order{}, err
+	}
+
+	user_empty_cart := models.UserCart{
+		Products: []models.Prod{},
+	}
+	// Delete user cart
+	updateObj := bson.D{{Key: "$set", Value: bson.D{{Key: "userCart", Value: user_empty_cart}}}}
+	if _, err = p.user_col.UpdateByID(p.ctx, user_id, updateObj, options.Update()); err != nil {
+		return models.Order{}, err
+	}
+
+	return order, nil
 }

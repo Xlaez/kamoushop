@@ -25,6 +25,8 @@ type ProductController interface {
 	DeleteProduct() gin.HandlerFunc
 	UpdateProduct() gin.HandlerFunc
 	AddToCart() gin.HandlerFunc
+	RemoveFromCart() gin.HandlerFunc
+	MakeOrder() gin.HandlerFunc
 }
 
 type productController struct {
@@ -62,7 +64,6 @@ func (p *productController) CreateProduct() gin.HandlerFunc {
 			Name:        request.Name,
 			Image:       secure_url,
 			Description: request.Description,
-			TotalStock:  request.TotalStock,
 		}
 
 		result, err := p.s.CreateProduct(data, payload.UserID)
@@ -246,5 +247,45 @@ func (p *productController) AddToCart() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, msgRes("added to cart"))
+	}
+}
+
+func (p *productController) RemoveFromCart() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var request types.GetProdById
+		if err := ctx.ShouldBindUri(&request); err != nil {
+			ctx.JSON(http.StatusBadRequest, errorRes(err))
+			return
+		}
+
+		payload, _ := ctx.MustGet(authPayload).(*token.Payload)
+		prod_id, err := primitive.ObjectIDFromHex(request.ID)
+
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+
+		if err = p.s.RemoveFromCart(prod_id, payload.UserID); err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+
+		ctx.JSON(http.StatusOK, msgRes("removed from cart"))
+	}
+}
+
+// TODO: send a pdf instead as invoice with order details to user
+func (p *productController) MakeOrder() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		payload, _ := ctx.MustGet(authPayload).(*token.Payload)
+
+		order, err := p.s.MakeOrder(payload.UserID)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, errorRes(err))
+			return
+		}
+
+		ctx.JSON(http.StatusOK, order)
 	}
 }
