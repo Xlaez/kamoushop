@@ -1,0 +1,55 @@
+basePath: /v1
+definitions:
+  types.AddUser:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        minLength: 7
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+host: localhost:4141
+info:
+  contact: {}
+  description: This is a mini-online store that provides the basic features which
+    one should
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: KamouShop API
+  version: "1.0"
+paths:
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: user's data
+        in: body
+        name: types.AddUser
+        required: true
+        schema:
+          $ref: '#/definitions/types.AddUser'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: string
+      summary: Create a new user
+      tags:
+      - user
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

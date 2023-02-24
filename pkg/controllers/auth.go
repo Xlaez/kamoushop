@@ -47,6 +47,14 @@ func NewAuthController(service api.AuthService, maker token.Maker, config utils.
 	}
 }
 
+// CreateUser godoc
+// @Summary Create a new user
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.AddUser body types.AddUser true "user's data"
+// @Success 201 {string} code
+// @Router		/auth/register	[post]
 func (a *authController) CreateUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.AddUser
