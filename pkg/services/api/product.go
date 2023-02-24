@@ -154,13 +154,14 @@ func (p *productService) MakeOrder(user_id primitive.ObjectID) (models.Order, er
 
 	var price int64 = 0
 	for _, prod := range user.UserCart.Products {
-		price += prod.Price
+		p := prod.Price * 100
+		price += p
 	}
 
 	order := models.Order{
 		ID:         primitive.NewObjectID(),
 		UserID:     user_id,
-		TotalPrice: price,
+		TotalPrice: price / 100,
 		CreatedAT:  time.Now(),
 		UpdatedAT:  time.Now(),
 	}

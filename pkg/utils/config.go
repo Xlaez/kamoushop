@@ -20,6 +20,7 @@ type Config struct {
 	OrderCol            string        `mapstructure:"ORDER_COL"`
 	TokenCol            string        `mapstructure:"TOKEN_COL"`
 	RedisUri            string        `mapstructure:"REDIS_URL"`
+	UniCloudKey         string        `mapstructure:"UNICLOUD_API_KEY"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
