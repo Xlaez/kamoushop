@@ -49,7 +49,7 @@ func NewAuthController(service api.AuthService, maker token.Maker, config utils.
 
 // CreateUser godoc
 // @Summary Create a new user
-// @Tags user
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param types.AddUser body types.AddUser true "user's data"
@@ -85,6 +85,14 @@ func (a *authController) CreateUser() gin.HandlerFunc {
 	}
 }
 
+// LoginUser godoc
+// @Summary Signin a user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param types.Login body types.Login true "user's data"
+// @Success 200 {string} token
+// @Router		/auth/login	[post]
 func (a *authController) LoginUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.Login
@@ -109,6 +117,14 @@ func (a *authController) LoginUser() gin.HandlerFunc {
 	}
 }
 
+// ValidateAcc godoc
+// @Summary Validate User's Account with validation code sent after registration
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.ValidateAcc body types.ValidateAcc true "validation code"
+// @Success 200 {string} message
+// @Router		/auth/validate	[post]
 func (a *authController) ValidateAcc() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.ValidateAcc

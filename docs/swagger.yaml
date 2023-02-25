@@ -17,6 +17,26 @@ definitions:
     - last_name
     - password
     type: object
+  types.Login:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 7
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  types.ValidateAcc:
+    properties:
+      code:
+        maxLength: 6
+        minLength: 6
+        type: string
+    required:
+    - code
+    type: object
 host: localhost:4141
 info:
   contact: {}
@@ -28,6 +48,27 @@ info:
   title: KamouShop API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: user's data
+        in: body
+        name: types.Login
+        required: true
+        schema:
+          $ref: '#/definitions/types.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Signin a user
+      tags:
+      - auth
   /auth/register:
     post:
       consumes:
@@ -47,6 +88,27 @@ paths:
           schema:
             type: string
       summary: Create a new user
+      tags:
+      - auth
+  /auth/validate:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: validation code
+        in: body
+        name: types.ValidateAcc
+        required: true
+        schema:
+          $ref: '#/definitions/types.ValidateAcc'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Validate User's Account with validation code sent after registration
       tags:
       - user
 securityDefinitions:

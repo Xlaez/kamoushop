@@ -3,5 +3,5 @@ start:
 run:
 	go run cmd/main.go
 init-swagger:
-	swagger init -g pkg/server/server.go
+	swag init -g cmd/main.go
 .PHONY: start, run, init-swagger
