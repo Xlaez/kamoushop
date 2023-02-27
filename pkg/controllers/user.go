@@ -49,6 +49,14 @@ func NewUserController(s api.UserService, maker token.Maker, config utils.Config
 	}
 }
 
+// GetUserById godoc
+// @Summary Get a user by _id
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.GetUser query types.GetUser true "validation code"
+// @Success 200 {string} types.User
+// @Router		/user/by-id/:id	[get]
 func (u *userController) GetUserById() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.GetUser
@@ -74,6 +82,14 @@ func (u *userController) GetUserById() gin.HandlerFunc {
 	}
 }
 
+// GetUserById godoc
+// @Summary Get a user by _id
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.GetUser query types.GetUser true "validation code"
+// @Success 200 {string} types.User
+// @Router		/user/by-id/:id	[get]
 func (u *userController) GetUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authPayload := ctx.MustGet(authPayload).(*token.Payload)
@@ -88,6 +104,14 @@ func (u *userController) GetUser() gin.HandlerFunc {
 	}
 }
 
+// ChangePassword godoc
+// @Summary Change user's password
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.ChangePassword body types.ChangePassword true "change user password"
+// @Success 200 {string} msgRes
+// @Router		/user/update/password	[patch]
 func (u *userController) ChangePassword() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.ChangePassword
@@ -125,6 +149,14 @@ func (u *userController) ChangePassword() gin.HandlerFunc {
 	}
 }
 
+// UpdateImage godoc
+// @Summary Change user's image
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.UploadImage formData types.UploadImage true "change user image"
+// @Success 200 {string} msgRes
+// @Router		/user/update/image	[patch]
 func (u *userController) UpdateImage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.UploadImage
@@ -156,6 +188,14 @@ func (u *userController) UpdateImage() gin.HandlerFunc {
 	}
 }
 
+// UpdateProfile godoc
+// @Summary Change user's profile
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.UpdateProfile body types.UpdateProfile true "change user profile"
+// @Success 200 {string} msgRes
+// @Router		/user/update/profile	[patch]
 func (u *userController) UpdateProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.UpdateProfile
@@ -183,6 +223,14 @@ func (u *userController) UpdateProfile() gin.HandlerFunc {
 	}
 }
 
+// UpdateBrandName godoc
+// @Summary Update user's brand name
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.UpdateBrandName body types.UpdateBrandName true "update user's brand name"
+// @Success 200 {string} msgRes
+// @Router		/user/update/brand-name	[patch]
 func (u *userController) UpdateBrandName() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.UpdateBrandName
@@ -214,6 +262,14 @@ func (u *userController) UpdateBrandName() gin.HandlerFunc {
 	}
 }
 
+// GetAllUsers godoc
+// @Summary Get all the users from the database
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.GetUsers query types.GetUsers true "get all users from database"
+// @Success 200 {string} msgRes
+// @Router		/user	[get]
 func (u *userController) GetAllUsers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.GetUsers
@@ -238,6 +294,14 @@ func (u *userController) GetAllUsers() gin.HandlerFunc {
 	}
 }
 
+// QueryBrands godoc
+// @Summary Query brands from database
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.QueryBrands query types.QueryBrands true "get all brands from database"
+// @Success 200 {string} msgRes
+// @Router		/user/brands	[get]
 func (u *userController) QueryBrands() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.QueryBrands
@@ -262,6 +326,14 @@ func (u *userController) QueryBrands() gin.HandlerFunc {
 	}
 }
 
+// DeleteUser godoc
+// @Summary Delete a user from database
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.DeleteUser query types.DeleteUser true "delete user"
+// @Success 200 {string} msgRes
+// @Router		/user/:password	[delete]
 func (u *userController) DeleteUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.DeleteUser
@@ -297,6 +369,14 @@ func (u *userController) DeleteUser() gin.HandlerFunc {
 	}
 }
 
+// StarUserShop godoc
+// @Summary Star a user's shop
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param types.StarShop query types.StarShop true "user id"
+// @Success 200 {string} msgRes
+// @Router		/user/star/:id	[patch]
 func (u *userController) StarUserShop() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.StarShop

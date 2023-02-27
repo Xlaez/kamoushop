@@ -43,6 +43,14 @@ func NewProductController(s api.ProductService, maker token.Maker, config utils.
 	}
 }
 
+// CreateProduct godoc
+// @Summary Add a new product to the database
+// @Tags product
+// @Accept json
+// @Produce json
+// @Param types.Product formData types.Product true "validation code"
+// @Success 201 {string} result
+// @Router		/product	[post]
 func (p *productController) CreateProduct() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var request types.Product

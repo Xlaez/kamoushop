@@ -17,6 +17,18 @@ definitions:
     - last_name
     - password
     type: object
+  types.ChangePassword:
+    properties:
+      new_password:
+        minLength: 7
+        type: string
+      old_password:
+        minLength: 7
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
   types.Login:
     properties:
       email:
@@ -27,6 +39,20 @@ definitions:
     required:
     - email
     - password
+    type: object
+  types.UpdateBrandName:
+    properties:
+      brand_name:
+        type: string
+    type: object
+  types.UpdateProfile:
+    properties:
+      facebook:
+        type: string
+      instagram:
+        type: string
+      phone_no:
+        type: string
     type: object
   types.ValidateAcc:
     properties:
@@ -109,6 +135,225 @@ paths:
           schema:
             type: string
       summary: Validate User's Account with validation code sent after registration
+      tags:
+      - auth
+  /product:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - in: formData
+        minLength: 5
+        name: description
+        required: true
+        type: string
+      - in: formData
+        name: image
+        type: string
+      - in: formData
+        minLength: 3
+        name: name
+        required: true
+        type: string
+      - in: formData
+        name: price
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: string
+      summary: Add a new product to the database
+      tags:
+      - product
+  /user:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: page
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Get all the users from the database
+      tags:
+      - user
+  /user/:password:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Delete a user from database
+      tags:
+      - user
+  /user/brands:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: keyword
+        required: true
+        type: string
+      - in: query
+        name: limit
+        type: integer
+      - in: query
+        name: page
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Query brands from database
+      tags:
+      - user
+  /user/by-id/:id:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Get a user by _id
+      tags:
+      - user
+  /user/star/:id:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Star a user's shop
+      tags:
+      - user
+  /user/update/brand-name:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: update user's brand name
+        in: body
+        name: types.UpdateBrandName
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateBrandName'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Update user's brand name
+      tags:
+      - user
+  /user/update/image:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - in: formData
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Change user's image
+      tags:
+      - user
+  /user/update/password:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: change user password
+        in: body
+        name: types.ChangePassword
+        required: true
+        schema:
+          $ref: '#/definitions/types.ChangePassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Change user's password
+      tags:
+      - user
+  /user/update/profile:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: change user profile
+        in: body
+        name: types.UpdateProfile
+        required: true
+        schema:
+          $ref: '#/definitions/types.UpdateProfile'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Change user's profile
       tags:
       - user
 securityDefinitions:

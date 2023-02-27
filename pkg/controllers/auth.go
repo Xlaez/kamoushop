@@ -119,7 +119,7 @@ func (a *authController) LoginUser() gin.HandlerFunc {
 
 // ValidateAcc godoc
 // @Summary Validate User's Account with validation code sent after registration
-// @Tags user
+// @Tags auth
 // @Accept json
 // @Produce json
 // @Param types.ValidateAcc body types.ValidateAcc true "validation code"
